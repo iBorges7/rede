@@ -1,10 +1,10 @@
 ###
 ENTIDADES:
 
-Usuário
-Comunidade
-Recado
-Membership (relação usuário ↔ comunidade)
+- Usuário
+- Comunidade
+- Recado
+- Membership (relação usuário ↔ comunidade)
 
 ####
 [ 👤 USUÁRIO ]
