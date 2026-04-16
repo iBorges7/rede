@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+//SOLICITAÇÃO DE AMIZADE
+model FriendRequest {
+  id         String        @id @default(uuid())
+  status     RequestStatus @default(PENDING)
+  senderId   String        @map("sender_id")
+  receiverId String        @map("receiver_id")
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  sender   User @relation("sentRequests", fields: [senderId], references: [id])
+  receiver User @relation("receivedRequests", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+}
+
+//AMIZADE
+model Friendship {
+  id String @id @default(uuid())
+
+  user1Id String
+  user2Id String
+
+  user1 User @relation("friends1", fields: [user1Id], references: [id])
+  user2 User @relation("friends2", fields: [user2Id], references: [id])
+
+  @@unique([user1Id, user2Id])
+}
+
+//USUÁRIO
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  about     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  sentRequests     FriendRequest[] @relation("sentRequests")
+  receivedRequests FriendRequest[] @relation("receivedRequests")
+
+  sentScraps     Scrap[]      @relation("sentScraps")
+  receivedScraps Scrap[]      @relation("receivedScraps")
+  user1          Friendship[] @relation("friends1")
+  user2          Friendship[] @relation("friends2")
+}
+
+//RECADOS
+model Scrap {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  senderId String @map("sender_id")
+  sender   User   @relation("sentScraps", fields: [senderId], references: [id])
+
+  recipientId String @map("recipient_id")
+  recipient   User   @relation("receivedScraps", fields: [recipientId], references: [id])
+}
