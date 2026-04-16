@@ -1,0 +1,9 @@
+services:
+  pushed-order-test:
+    image: bitnami/postgresql
+    ports:
+     - 5434:5432
+    environment:
+      - POSTGRESQL_USERNAME=test
+      - POSTGRESQL_PASSWORD=test
+      - POSTGRESQL_DATABASE=rede-social
