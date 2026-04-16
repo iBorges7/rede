@@ -18,7 +18,19 @@ enum RequestStatus {
   REJECTED
 }
 
-//SOLICITAÇÃO DE AMIZADE
+enum MemberRole {
+  MEMBER
+  ADMIN
+}
+
+enum TypeCommunity {
+  PUBLIC
+  PRIVATE
+}
+
+// =========================
+// SOLICITAÇÃO DE AMIZADE
+// =========================
 model FriendRequest {
   id         String        @id @default(uuid())
   status     RequestStatus @default(PENDING)
@@ -30,40 +42,57 @@ model FriendRequest {
   receiver User @relation("receivedRequests", fields: [receiverId], references: [id])
 
   @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
 }
 
-//AMIZADE
+// =========================
+// AMIZADE
+// =========================
 model Friendship {
   id String @id @default(uuid())
 
-  user1Id String
-  user2Id String
+  user1Id String @map("user1_id")
+  user2Id String @map("user2_id")
 
   user1 User @relation("friends1", fields: [user1Id], references: [id])
   user2 User @relation("friends2", fields: [user2Id], references: [id])
 
   @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
 }
 
-//USUÁRIO
+// =========================
+// USUÁRIO
+// =========================
 model User {
   id        String   @id @default(uuid())
+  avatar    String?
   name      String
   email     String   @unique
   password  String
   about     String?
   createdAt DateTime @default(now()) @map("created_at")
 
-  sentRequests     FriendRequest[] @relation("sentRequests")
-  receivedRequests FriendRequest[] @relation("receivedRequests")
+  // amizade
+  sentRequests       FriendRequest[] @relation("sentRequests")
+  receivedRequests   FriendRequest[] @relation("receivedRequests")
+  friendshipsAsUser1 Friendship[]    @relation("friends1")
+  friendshipsAsUser2 Friendship[]    @relation("friends2")
 
-  sentScraps     Scrap[]      @relation("sentScraps")
-  receivedScraps Scrap[]      @relation("receivedScraps")
-  user1          Friendship[] @relation("friends1")
-  user2          Friendship[] @relation("friends2")
+  // scraps
+  sentScraps     Scrap[] @relation("sentScraps")
+  receivedScraps Scrap[] @relation("receivedScraps")
+
+  // comunidades
+  memberships        CommunityMember[]
+  createdCommunities Community[]       @relation("communityCreator")
 }
 
-//RECADOS
+// =========================
+// RECADOS
+// =========================
 model Scrap {
   id        String   @id @default(uuid())
   content   String
@@ -74,4 +103,43 @@ model Scrap {
 
   recipientId String @map("recipient_id")
   recipient   User   @relation("receivedScraps", fields: [recipientId], references: [id])
+
+  @@index([senderId])
+  @@index([recipientId])
+}
+
+// =========================
+// RELAÇÃO USUÁRIO ↔ COMUNIDADE
+// =========================
+model CommunityMember {
+  id String @id @default(uuid())
+
+  userId      String @map("user_id")
+  communityId String @map("community_id")
+
+  role     MemberRole @default(MEMBER)
+  joinedAt DateTime   @default(now()) @map("joined_at")
+
+  user      User      @relation(fields: [userId], references: [id])
+  community Community @relation(fields: [communityId], references: [id])
+
+  @@unique([userId, communityId])
+  @@index([userId])
+  @@index([communityId])
+}
+
+// =========================
+// COMUNIDADE
+// =========================
+model Community {
+  id          String        @id @default(uuid())
+  avatar      String?
+  name        String
+  type        TypeCommunity
+  description String
+
+  creatorId String @map("creator_id")
+  creator   User   @relation("communityCreator", fields: [creatorId], references: [id])
+
+  members CommunityMember[]
 }
